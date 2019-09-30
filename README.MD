@@ -1,7 +1,6 @@
-# :computer: Webpack-Three-Starter :ocean:
-<img src="https://raw.githubusercontent.com/webpack/media/master/logo/icon-square-big.png" width="100">
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Npm-logo.svg/1280px-Npm-logo.svg.png" width="100">
-<img src="https://developers.cloudflare.com/logos/threejs.svg" width="100">
+# :computer: LL.GL :ocean:
+Lets Learn native webGL
+An exercice to try to recreate a bear bones webGL framework from the ground up
 
 A simple webpack starter for three.js experiments
 
@@ -10,11 +9,12 @@ A simple webpack starter for three.js experiments
 NPM
 Webpack 3.0 and up
 GLSLIFY
+Type Script
 ```
 
 ## Usage
 ```
-git clone https://github.com/MariusBallot/Webpack-Three-Starter.git
+git clone git@github.com:MariusBallot/LL.GL.git
 npm i
 ```
 
