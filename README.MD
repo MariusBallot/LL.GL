@@ -1,5 +1,5 @@
 # :computer: LL.GL :ocean:
-Lets Learn native webGL
+<strong>L</strong>ets Learn native webGL <br/>
 An exercice to try to recreate a bear bones webGL framework from the ground up
 
 A simple webpack starter for three.js experiments
