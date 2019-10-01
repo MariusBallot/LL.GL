@@ -3,6 +3,8 @@ import vertSourceShader from '../shaders/shader.vert'
 //@ts-ignore
 import fragSourceShader from '../shaders/shader.frag'
 
+import Maths from '../utils/Maths.class'
+
 
 export default class Renderer {
 
@@ -15,11 +17,15 @@ export default class Renderer {
     resolutionUniformLocation: WebGLUniformLocation
     colorUniformLocation: WebGLUniformLocation
 
+    matrixUniformLocation: WebGLUniformLocation
+
     positionBuffer: WebGLBuffer
 
     image: HTMLImageElement
+    maths: any
 
     constructor (public canvas: HTMLCanvasElement) {
+        this.maths = new Maths();
         this.bind()
         this.init()
         this.displayImage()
@@ -86,13 +92,17 @@ export default class Renderer {
         let height = height_
         this.positionAttributeLocation = this.gl.getAttribLocation(this.program, "a_position")
         this.resolutionUniformLocation = this.gl.getUniformLocation(this.program, "u_resolution");
+
+        this.matrixUniformLocation = this.gl.getUniformLocation(this.program, "u_matrix");
+
+
         this.colorUniformLocation = this.gl.getUniformLocation(this.program, "u_color")
 
 
         this.positionBuffer = this.gl.createBuffer()
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.rect(x, y, width, height)), this.gl.STATIC_DRAW);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.rect(width, height)), this.gl.STATIC_DRAW);
 
         this.draw()
     }
@@ -106,7 +116,23 @@ export default class Renderer {
         this.gl.enableVertexAttribArray(this.positionAttributeLocation)
 
         this.gl.uniform2f(this.resolutionUniformLocation, this.gl.canvas.width, this.gl.canvas.height);
+
+        var translationMatrix = this.maths.m3.translation(200, 200);
+        var rotationMatrix = this.maths.m3.rotation(Math.PI / 2);
+        var scaleMatrix = this.maths.m3.scaling(1, 1);
+        var moveOriginMatrix = this.maths.m3.translation(-50, -75);
+        var projectionMatrix = this.maths.m3.projection(
+            this.gl.canvas.width, this.gl.canvas.height);
+
+        // Multiply the matrices.
+        var matrix = this.maths.m3.projection(this.gl.canvas.width, this.gl.canvas.height);
+        matrix = this.maths.translate2D(matrix, 400, 200);
+        matrix = this.maths.rotate2D(matrix, 1);
+        matrix = this.maths.scale2D(matrix, 2, 1);
+        this.gl.uniformMatrix3fv(this.matrixUniformLocation, false, matrix);
+
         this.gl.uniform4f(this.colorUniformLocation, 1., 0.5, 0.5, 1)
+
 
         this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0)
         this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
@@ -119,13 +145,13 @@ export default class Renderer {
         this.createPlane = this.createPlane.bind(this)
     }
 
-    rect(posX, posY, width, height) {
+    rect(width, height) {
         var positions = [
-            posX, posY,
-            width, posY,
-            posX, height,
-            posX, height,
-            width, posY,
+            0, 0,
+            width, 0,
+            0, height,
+            0, height,
+            width, 0,
             width, height];
         return positions
     }

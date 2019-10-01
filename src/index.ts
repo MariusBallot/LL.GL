@@ -5,7 +5,7 @@ let canvas: HTMLCanvasElement = document.querySelector('#c')
 let renderer = new Renderer(canvas)
 
 function update() {
-  // renderer.draw()
+  renderer.draw()
   requestAnimationFrame(update)
 }
 
