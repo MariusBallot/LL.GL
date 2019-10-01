@@ -21,47 +21,30 @@ export default class Renderer {
 
     constructor (public canvas: HTMLCanvasElement) {
         this.bind()
+        this.init()
+        this.displayImage()
+    }
 
+    init() {
+        //GET CONTEXT
         this.gl = this.canvas.getContext("webgl")
         if (!this.gl) {
             alert('WebGL not supported on this browser')
         }
 
-        this.image = new Image()
-        this.image.src = './src/assets/CP3O2tUWoAA0IPl.png'
-        this.image.onload = () => { this.renderImage(this.image) }
-        console.log(this.image)
-
-        this.vertexShader = this.createShader(this.gl, this.gl.VERTEX_SHADER, vertSourceShader)
-        this.fragmentShader = this.createShader(this.gl, this.gl.FRAGMENT_SHADER, fragSourceShader)
-        this.program = this.createProgram(this.gl, this.vertexShader, this.fragmentShader)
-
-        this.positionAttributeLocation = this.gl.getAttribLocation(this.program, "a_position")
-        this.resolutionUniformLocation = this.gl.getUniformLocation(this.program, "u_resolution");
-        this.colorUniformLocation = this.gl.getUniformLocation(this.program, "u_color")
-
-
-        this.positionBuffer = this.gl.createBuffer()
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.rect(10, 10, 200, 400)), this.gl.STATIC_DRAW);
-
-        // this.resizeCanvas(this.gl.canvas);
-
         this.canvas.width = window.innerWidth
         this.canvas.height = window.innerHeight
 
-        this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
-        this.gl.clearColor(0, 0, 0, 0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        //CHOOSE THE SHADERS TO CREATE A PROGRAM
+        this.vertexShader = this.createShader(this.gl, this.gl.VERTEX_SHADER, vertSourceShader)
+        this.fragmentShader = this.createShader(this.gl, this.gl.FRAGMENT_SHADER, fragSourceShader)
+        this.program = this.createProgram(this.gl, this.vertexShader, this.fragmentShader)
+    }
 
-        this.gl.useProgram(this.program)
-        this.gl.enableVertexAttribArray(this.positionAttributeLocation)
-
-        this.gl.uniform2f(this.resolutionUniformLocation, this.gl.canvas.width, this.gl.canvas.height);
-        this.gl.uniform4f(this.colorUniformLocation, 1., 0.5, 0.5, 1)
-
-        this.draw()
+    displayImage() {
+        this.image = new Image()
+        this.image.src = './src/assets/CP3O2tUWoAA0IPl.png'
+        this.image.onload = () => { this.renderImage(this.image) }
     }
 
     renderImage(image) {
@@ -92,9 +75,39 @@ export default class Renderer {
 
         // Upload the image into the texture.
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
+
+        this.createPlane(10, 10, 200, 200)
+    }
+
+    createPlane(x_, y_, width_, height_) {
+        let x = x_
+        let y = y_
+        let width = width_
+        let height = height_
+        this.positionAttributeLocation = this.gl.getAttribLocation(this.program, "a_position")
+        this.resolutionUniformLocation = this.gl.getUniformLocation(this.program, "u_resolution");
+        this.colorUniformLocation = this.gl.getUniformLocation(this.program, "u_color")
+
+
+        this.positionBuffer = this.gl.createBuffer()
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.rect(x, y, width, height)), this.gl.STATIC_DRAW);
+
+        this.draw()
     }
 
     draw() {
+        this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+        this.gl.clearColor(0, 0, 0, 0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+
+        this.gl.useProgram(this.program)
+        this.gl.enableVertexAttribArray(this.positionAttributeLocation)
+
+        this.gl.uniform2f(this.resolutionUniformLocation, this.gl.canvas.width, this.gl.canvas.height);
+        this.gl.uniform4f(this.colorUniformLocation, 1., 0.5, 0.5, 1)
+
         this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0)
         this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     }
@@ -102,6 +115,8 @@ export default class Renderer {
     bind() {
         this.createShader = this.createShader.bind(this)
         this.createProgram = this.createProgram.bind(this)
+        this.renderImage = this.renderImage.bind(this)
+        this.createPlane = this.createPlane.bind(this)
     }
 
     rect(posX, posY, width, height) {
