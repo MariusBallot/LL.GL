@@ -1,12 +1,14 @@
 //@ts-ignore
-import vertSourceShader from '../shaders/shader.vert'
+import vertSourceShader from '../shaders/2D/shader.vert'
 //@ts-ignore
-import fragSourceShader from '../shaders/shader.frag'
+import fragSourceShader from '../shaders/2D/shader.frag'
 
 import Maths from '../utils/Maths.class'
 
 
-export default class Renderer {
+export default class Renderer2D {
+
+    texFlag: boolean
 
     gl: WebGLRenderingContext
     vertexShader: WebGLShader
@@ -16,8 +18,9 @@ export default class Renderer {
     positionAttributeLocation: number
     resolutionUniformLocation: WebGLUniformLocation
     colorUniformLocation: WebGLUniformLocation
-
     matrixUniformLocation: WebGLUniformLocation
+
+    texture: WebGLTexture
 
     positionBuffer: WebGLBuffer
 
@@ -25,10 +28,10 @@ export default class Renderer {
     maths: any
 
     constructor (public canvas: HTMLCanvasElement) {
+        this.texFlag = false
         this.maths = new Maths();
         this.bind()
         this.init()
-        this.displayImage()
     }
 
     init() {
@@ -45,15 +48,19 @@ export default class Renderer {
         this.vertexShader = this.createShader(this.gl, this.gl.VERTEX_SHADER, vertSourceShader)
         this.fragmentShader = this.createShader(this.gl, this.gl.FRAGMENT_SHADER, fragSourceShader)
         this.program = this.createProgram(this.gl, this.vertexShader, this.fragmentShader)
+        this.createPlane(10, 10, 200, 200)
+        this.displayImage()
+        this.draw()
+
     }
 
     displayImage() {
         this.image = new Image()
         this.image.src = './src/assets/CP3O2tUWoAA0IPl.png'
-        this.image.onload = () => { this.renderImage(this.image) }
+        this.image.onload = () => { this.renderImage() }
     }
 
-    renderImage(image) {
+    renderImage() {
         var texCoordLocation = this.gl.getAttribLocation(this.program, "a_texCoord");
 
         // provide texture coordinates for the rectangle.
@@ -70,19 +77,17 @@ export default class Renderer {
         this.gl.vertexAttribPointer(texCoordLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         // Create a texture.
-        var texture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+        this.texture = this.gl.createTexture();
+
 
         // Set the parameters so we can render any size image.
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-
         // Upload the image into the texture.
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
 
-        this.createPlane(10, 10, 200, 200)
+        this.texFlag = true
     }
 
     createPlane(x_, y_, width_, height_) {
@@ -90,6 +95,7 @@ export default class Renderer {
         let y = y_
         let width = width_
         let height = height_
+
         this.positionAttributeLocation = this.gl.getAttribLocation(this.program, "a_position")
         this.resolutionUniformLocation = this.gl.getUniformLocation(this.program, "u_resolution");
 
@@ -101,38 +107,35 @@ export default class Renderer {
 
         this.positionBuffer = this.gl.createBuffer()
 
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.rect(width, height)), this.gl.STATIC_DRAW);
 
-        this.draw()
+
     }
 
     draw() {
-        this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
-        this.gl.clearColor(0, 0, 0, 0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
+        this.gl.clearColor(0, 0, 0, 0)
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT)
 
         this.gl.useProgram(this.program)
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.rect(300, 300)), this.gl.STATIC_DRAW);
         this.gl.enableVertexAttribArray(this.positionAttributeLocation)
 
-        this.gl.uniform2f(this.resolutionUniformLocation, this.gl.canvas.width, this.gl.canvas.height);
-
-        var translationMatrix = this.maths.m3.translation(200, 200);
-        var rotationMatrix = this.maths.m3.rotation(Math.PI / 2);
-        var scaleMatrix = this.maths.m3.scaling(1, 1);
-        var moveOriginMatrix = this.maths.m3.translation(-50, -75);
-        var projectionMatrix = this.maths.m3.projection(
-            this.gl.canvas.width, this.gl.canvas.height);
+        this.gl.uniform2f(this.resolutionUniformLocation, this.gl.canvas.width, this.gl.canvas.height)
 
         // Multiply the matrices.
-        var matrix = this.maths.m3.projection(this.gl.canvas.width, this.gl.canvas.height);
-        matrix = this.maths.translate2D(matrix, 400, 200);
-        matrix = this.maths.rotate2D(matrix, 1);
-        matrix = this.maths.scale2D(matrix, 2, 1);
-        this.gl.uniformMatrix3fv(this.matrixUniformLocation, false, matrix);
+        var matrix = this.maths.m3.projection(this.gl.canvas.width, this.gl.canvas.height)
+        matrix = this.maths.translate2D(matrix, 400, 200)
+        matrix = this.maths.rotate2D(matrix, 1)
+        matrix = this.maths.scale2D(matrix, 2, 1)
+        this.gl.uniformMatrix3fv(this.matrixUniformLocation, false, matrix)
 
         this.gl.uniform4f(this.colorUniformLocation, 1., 0.5, 0.5, 1)
 
+        if (this.texFlag) {
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.image);
+        }
 
         this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0)
         this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
