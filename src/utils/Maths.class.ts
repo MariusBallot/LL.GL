@@ -4,6 +4,18 @@ export default class Maths {
   constructor() {
     this.bind()
     this.m4 = {
+      orthographic: function (left, right, bottom, top, near, far) {
+        return [
+          2 / (right - left), 0, 0, 0,
+          0, 2 / (top - bottom), 0, 0,
+          0, 0, 2 / (near - far), 0,
+
+          (left + right) / (left - right),
+          (bottom + top) / (bottom - top),
+          (near + far) / (near - far),
+          1,
+        ];
+      },
       projection: function (width, height, depth) {
         // Note: This matrix flips the Y axis so 0 is at the top.
         return [
@@ -233,9 +245,19 @@ export default class Maths {
     return [s, c]
   }
 
+  makeZToWMatrix(fudgeFactor) {
+    return [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, fudgeFactor,
+      0, 0, 0, 1,
+    ];
+  }
+
   bind() {
     this.translate2D = this.translate2D.bind(this)
     this.rotate2D = this.rotate2D.bind(this)
     this.scale2D = this.scale2D.bind(this)
+    this.makeZToWMatrix = this.makeZToWMatrix.bind(this)
   }
 }

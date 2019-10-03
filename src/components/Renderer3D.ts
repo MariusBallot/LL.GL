@@ -52,11 +52,13 @@ export default class Renderer3D {
         this.positionAttributeLocation = this.gl.getAttribLocation(this.program, "a_position")
         this.matrixUniformLocation = this.gl.getUniformLocation(this.program, "u_matrix");
         this.colorUniformLocation = this.gl.getUniformLocation(this.program, "u_color")
+
         this.positionBuffer = this.gl.createBuffer()
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.cube(300)), this.gl.STATIC_DRAW);
 
         this.gl.enable(this.gl.CULL_FACE)
+        this.gl.enable(this.gl.DEPTH_TEST)
 
         this.draw()
 
@@ -76,14 +78,18 @@ export default class Renderer3D {
         this.gl.uniform2f(this.resolutionUniformLocation, this.gl.canvas.width, this.gl.canvas.height)
 
         // Multiply the matrices.
-        var matrix = this.maths.m4.projection(this.gl.canvas.width, this.gl.canvas.height, 400)
+        var matrix = this.maths.m4.projection(this.gl.canvas.width, this.gl.canvas.height, 1000)
         matrix = this.maths.translate(matrix, 300, 300, 0)
-        matrix = this.maths.yRotate(matrix, Date.now() / 500)
-        matrix = this.maths.xRotate(matrix, Date.now() / 500)
+        matrix = this.maths.yRotate(matrix, Date.now() / 100)
+        matrix = this.maths.xRotate(matrix, Date.now() / 100)
         matrix = this.maths.scale(matrix, 1, 1, 1)
+        matrix = this.maths.makeZToWMatrix(0.2)
+        matrix = this.maths.m4.multiply(matrix, this.maths.m4.projection(this.gl.canvas.width, this.gl.canvas.height, 400));
+
         this.gl.uniformMatrix4fv(this.matrixUniformLocation, false, matrix)
 
         this.gl.uniform4f(this.colorUniformLocation, 1., 0.5, 0.5, 1)
+
 
         if (this.texFlag) {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
@@ -100,46 +106,46 @@ export default class Renderer3D {
 
     cube(width) {
         var positions = [
+            width, 0, 0,
             0, 0, 0,
-            width, 0, 0,
             0, width, 0,
-            width, 0, 0,
             width, width, 0,
+            width, 0, 0,
             0, width, 0,
             //___________________________
             0, width, 0,
-            width, width, 0,
             0, width, width,
             width, width, 0,
             width, width, width,
-            0, width, width,
-            //___________________________
-            0, 0, 0,
-            0, width, 0,
-            0, width, width,
-            0, width, width,
-            0, 0, width,
-            0, 0, 0,
-            //___________________________
-            0, 0, 0,
-            width, 0, 0,
-            0, 0, width,
-            width, 0, 0,
-            width, 0, width,
-            0, 0, width,
-            //___________________________
-            0, 0, width,
-            width, 0, width,
-            0, width, width,
-            width, 0, width,
-            width, width, width,
-            0, width, width,
-            //___________________________
-            width, 0, 0,
-            width, 0, width,
             width, width, 0,
+            0, width, width,
+            //___________________________
+            0, 0, 0,
+            0, width, width,
+            0, width, 0,
+            0, 0, width,
+            0, width, width,
+            0, 0, 0,
+            //___________________________
+            0, 0, 0,
+            width, 0, 0,
+            0, 0, width,
+            0, 0, width,
+            width, 0, 0,
+            width, 0, width,
+            //___________________________
+            0, 0, width,
+            width, 0, width,
+            0, width, width,
+            0, width, width,
             width, 0, width,
             width, width, width,
+            //___________________________
+            width, 0, width,
+            width, 0, 0,
+            width, width, 0,
+            width, width, width,
+            width, 0, width,
             width, width, 0,
         ];
         return positions

@@ -9,5 +9,5 @@ varying vec4 v_color;
  
 void main() {
   // gl_FragColor = u_color;
-  gl_FragColor = vec4(v_color);
+  gl_FragColor = vec4(v_color.x,0.,v_color.z,1.);
 }
