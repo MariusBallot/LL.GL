@@ -78,13 +78,11 @@ export default class Renderer3D {
         this.gl.uniform2f(this.resolutionUniformLocation, this.gl.canvas.width, this.gl.canvas.height)
 
         // Multiply the matrices.
-        var matrix = this.maths.m4.projection(this.gl.canvas.width, this.gl.canvas.height, 1000)
-        matrix = this.maths.translate(matrix, 300, 300, 0)
-        matrix = this.maths.yRotate(matrix, Date.now() / 100)
-        matrix = this.maths.xRotate(matrix, Date.now() / 100)
+        var matrix = this.maths.m4.perspective(100, this.gl.canvas.width / this.gl.canvas.height, 1, 10000)
+        matrix = this.maths.translate(matrix, 0, 0, -1000)
+        matrix = this.maths.yRotate(matrix, Date.now() / 1000)
+        matrix = this.maths.xRotate(matrix, Date.now() / 1000)
         matrix = this.maths.scale(matrix, 1, 1, 1)
-        matrix = this.maths.makeZToWMatrix(0.2)
-        matrix = this.maths.m4.multiply(matrix, this.maths.m4.projection(this.gl.canvas.width, this.gl.canvas.height, 400));
 
         this.gl.uniformMatrix4fv(this.matrixUniformLocation, false, matrix)
 
