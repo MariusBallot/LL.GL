@@ -55,7 +55,7 @@ export default class Renderer3D {
 
         this.positionBuffer = this.gl.createBuffer()
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.cube(300)), this.gl.STATIC_DRAW);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.cube(20)), this.gl.STATIC_DRAW);
 
         this.gl.enable(this.gl.CULL_FACE)
         this.gl.enable(this.gl.DEPTH_TEST)
@@ -77,24 +77,41 @@ export default class Renderer3D {
 
         this.gl.uniform2f(this.resolutionUniformLocation, this.gl.canvas.width, this.gl.canvas.height)
 
-        // Multiply the matrices.
-        var matrix = this.maths.m4.perspective(100, this.gl.canvas.width / this.gl.canvas.height, 1, 10000)
-        matrix = this.maths.translate(matrix, 0, 0, -1000)
-        matrix = this.maths.yRotate(matrix, Date.now() / 1000)
-        matrix = this.maths.xRotate(matrix, Date.now() / 1000)
-        matrix = this.maths.scale(matrix, 1, 1, 1)
+        var numFs = 5;
+        var radius = 200;
 
-        this.gl.uniformMatrix4fv(this.matrixUniformLocation, false, matrix)
+        var projectionMatrix = this.maths.m4.perspective(100, this.gl.canvas.width / this.gl.canvas.height, 1, 10000)
 
-        this.gl.uniform4f(this.colorUniformLocation, 1., 0.5, 0.5, 1)
+        var numFs = 5;
+        var radius = 200;
+
+        // Compute a matrix for the camera
+        var cameraMatrix = this.maths.m4.yRotation(Date.now() * 0.001);
+        cameraMatrix = this.maths.translate(cameraMatrix, 0, 0, 1200);
+
+        var viewMatrix = this.maths.m4.inverse(cameraMatrix);
+        var viewProjectionMatrix = this.maths.m4.multiply(projectionMatrix, viewMatrix);
+        for (let i = 0; i < 10; i++) {
+
+            let x = Math.cos(Math.PI * 2 / 10 * i) * 600
+            let y = Math.sin(Math.PI * 2 / 10 * i) * 600
+
+            var matrix = this.maths.m4.translate(viewProjectionMatrix, x, 0, y);
 
 
-        if (this.texFlag) {
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.image);
+            this.gl.uniformMatrix4fv(this.matrixUniformLocation, false, matrix)
+
+            this.gl.uniform4f(this.colorUniformLocation, 1., 0.5, 0.5, 1)
+
+
+            if (this.texFlag) {
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.image);
+            }
+
+            this.gl.drawArrays(this.gl.TRIANGLES, 0, 6 * 6);
         }
 
-        this.gl.drawArrays(this.gl.TRIANGLES, 0, 6 * 6);
     }
 
     bind() {
