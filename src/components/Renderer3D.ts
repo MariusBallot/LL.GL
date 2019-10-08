@@ -3,8 +3,10 @@ import vertSourceShader from '../shaders/3D/shader.vert'
 //@ts-ignore
 import fragSourceShader from '../shaders/3D/shader.frag'
 
-import Maths from '../utils/Maths.class'
-
+import m4 from '../utils/m4'
+import cube from '../utils/cube'
+//@ts-ignore
+import createProgram from '../utils/createProgram'
 
 export default class Renderer3D {
 
@@ -27,9 +29,13 @@ export default class Renderer3D {
     image: HTMLImageElement
     maths: any
 
+    m4: any
+    cube: any
+
     constructor(public canvas: HTMLCanvasElement) {
         this.texFlag = false
-        this.maths = new Maths();
+        this.m4 = m4
+        this.cube = cube
         this.bind()
         this.init()
     }
@@ -44,10 +50,7 @@ export default class Renderer3D {
         this.canvas.width = window.innerWidth
         this.canvas.height = window.innerHeight
 
-        //CHOOSE THE SHADERS TO CREATE A PROGRAM
-        this.vertexShader = this.createShader(this.gl, this.gl.VERTEX_SHADER, vertSourceShader)
-        this.fragmentShader = this.createShader(this.gl, this.gl.FRAGMENT_SHADER, fragSourceShader)
-        this.program = this.createProgram(this.gl, this.vertexShader, this.fragmentShader)
+        this.program = createProgram(this.gl, vertSourceShader, fragSourceShader)
 
         this.positionAttributeLocation = this.gl.getAttribLocation(this.program, "a_position")
         this.matrixUniformLocation = this.gl.getUniformLocation(this.program, "u_matrix");
@@ -78,26 +81,38 @@ export default class Renderer3D {
         this.gl.uniform2f(this.resolutionUniformLocation, this.gl.canvas.width, this.gl.canvas.height)
 
         var numFs = 5;
-        var radius = 200;
+        var radius = 600;
 
-        var projectionMatrix = this.maths.m4.perspective(100, this.gl.canvas.width / this.gl.canvas.height, 1, 10000)
+        var projectionMatrix = this.m4.perspective(Math.PI / 3, this.gl.canvas.width / this.gl.canvas.height, 1, 10000)
 
-        var numFs = 5;
-        var radius = 200;
+        var fPosition = [radius, 0, 0];
+        var up = [0, 1, 0];
+
+        var cameraMatrix = this.m4.yRotation(Date.now() * 0.001);
+        cameraMatrix = this.m4.translate(cameraMatrix, 0, 200, -1200);
+        var cameraPosition = [
+            cameraMatrix[12],
+            cameraMatrix[13],
+            cameraMatrix[14],
+        ];
 
         // Compute a matrix for the camera
-        var cameraMatrix = this.maths.m4.yRotation(Date.now() * 0.001);
-        cameraMatrix = this.maths.translate(cameraMatrix, 0, 0, 1200);
+        // var cameraMatrix = this.m4.yRotation(Date.now() * 0.001);
+        // cameraMatrix = this.maths.translate(cameraMatrix, 0, 0, 1200);
 
-        var viewMatrix = this.maths.m4.inverse(cameraMatrix);
-        var viewProjectionMatrix = this.maths.m4.multiply(projectionMatrix, viewMatrix);
-        for (let i = 0; i < 10; i++) {
+        var cameraMatrix = this.m4.lookAt(cameraPosition, fPosition, up);
 
-            let x = Math.cos(Math.PI * 2 / 10 * i) * 600
-            let y = Math.sin(Math.PI * 2 / 10 * i) * 600
+        var viewMatrix = this.m4.inverse(cameraMatrix);
+        var viewProjectionMatrix = this.m4.multiply(projectionMatrix, viewMatrix);
 
-            var matrix = this.maths.m4.translate(viewProjectionMatrix, x, 0, y);
+        let cubeCount = 30;
+        for (let i = 0; i < cubeCount; i++) {
 
+            let x = Math.cos(Math.PI * 2 / cubeCount * i) * 600
+            let y = Math.sin(Math.PI * 2 / cubeCount * i) * 600
+
+            var matrix = this.m4.translate(viewProjectionMatrix, x, 0, y);
+            matrix = this.m4.scale(matrix, 1, Math.cos(Math.PI * 2 / cubeCount * i + Date.now() * 0.01) * 10, 1)
 
             this.gl.uniformMatrix4fv(this.matrixUniformLocation, false, matrix)
 
@@ -115,55 +130,6 @@ export default class Renderer3D {
     }
 
     bind() {
-        this.createShader = this.createShader.bind(this)
-        this.createProgram = this.createProgram.bind(this)
-    }
-
-    cube(width) {
-        var positions = [
-            width, 0, 0,
-            0, 0, 0,
-            0, width, 0,
-            width, width, 0,
-            width, 0, 0,
-            0, width, 0,
-            //___________________________
-            0, width, 0,
-            0, width, width,
-            width, width, 0,
-            width, width, width,
-            width, width, 0,
-            0, width, width,
-            //___________________________
-            0, 0, 0,
-            0, width, width,
-            0, width, 0,
-            0, 0, width,
-            0, width, width,
-            0, 0, 0,
-            //___________________________
-            0, 0, 0,
-            width, 0, 0,
-            0, 0, width,
-            0, 0, width,
-            width, 0, 0,
-            width, 0, width,
-            //___________________________
-            0, 0, width,
-            width, 0, width,
-            0, width, width,
-            0, width, width,
-            width, 0, width,
-            width, width, width,
-            //___________________________
-            width, 0, width,
-            width, 0, 0,
-            width, width, 0,
-            width, width, width,
-            width, 0, width,
-            width, width, 0,
-        ];
-        return positions
     }
 
     resizeCanvas(canvas) {
@@ -180,33 +146,5 @@ export default class Renderer3D {
             canvas.height = displayHeight;
         }
 
-    }
-
-
-    createShader(gl, type, source) {
-        const shader = gl.createShader(type);
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-        if (success) {
-            return shader;
-        }
-
-        console.log(gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
-    }
-
-    createProgram(gl, vertexShader, fragmentShader) {
-        const program = gl.createProgram();
-        gl.attachShader(program, vertexShader);
-        gl.attachShader(program, fragmentShader);
-        gl.linkProgram(program);
-        const success = gl.getProgramParameter(program, gl.LINK_STATUS);
-        if (success) {
-            return program;
-        }
-
-        console.log(gl.getProgramInfoLog(program));
-        gl.deleteProgram(program);
     }
 }
