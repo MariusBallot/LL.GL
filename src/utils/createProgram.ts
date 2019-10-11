@@ -15,8 +15,6 @@ export default function createProgram(gl: WebGLRenderingContext, vertSource: str
   var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertSource)
   var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragSource)
 
-  console.log(vertexShader)
-
   const program = gl.createProgram();
   gl.attachShader(program, vertexShader);
   gl.attachShader(program, fragmentShader);

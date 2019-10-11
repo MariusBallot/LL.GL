@@ -1,4 +1,5 @@
 attribute vec4 a_position;
+attribute vec3 a_normal;
 attribute vec2 a_texCoord;
 
 uniform mat4 u_matrix;
